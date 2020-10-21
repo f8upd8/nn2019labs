@@ -2,81 +2,75 @@ import random, numpy
 from numpy import power
 from utility import getRandom2DimArray
 from dataset import readDataSet
+import math
+import pickle
 
-def F(a, S):
-    return 1 / (1 + numpy.e ** (-S * a))
+def f(x):
+  return 1 / (1 + math.exp(-x))
 
-WEIGHTS = (-0.3, 0.3)
+dataSet = readDataSet('data/semeion.data') #Датасет
 
-class BPNN:
-    def __init__(self, input_c, hidden_lc, output_lc, a=0.3, e=0.1, N=10000, bfun=F):
-        # Шаг 1 (Инициализация)
-        self.whLayer = getRandom2DimArray(hidden_lc, input_c, WEIGHTS[0], WEIGHTS[1])
-        self.woLayer = getRandom2DimArray(output_lc, hidden_lc, WEIGHTS[0], WEIGHTS[1])
-        self.input_c = input_c
-        self.hidden_lc = hidden_lc
-        self.output_lc = output_lc
-        self.e = e
-        self.N = N
-        self.bfun = F
-        self.a = a
+inputCount = len(dataSet[5][0]) # Количество входов
+neuronCount = 10 #Количество нейронов
 
-    def afun(self, S):
-        return F(self.a, S)
+# Шаг 1 - Инициализация Сети
+W = getRandom2DimArray(inputCount, neuronCount, -0.3, 0.3)
+a0 = 0.3
+D0 = neuronCount
+decD = 0.0001
+deca = 0.0001
 
-    def generate_output(self, input_vector):
-        hidden_out = list()
-        for i in range(self.hidden_lc):
-            S = 0
-            for j in range(self.input_c):
-                S += input_vector[j] * self.whLayer[i, j]
-            hidden_out.append(self.afun(S))
-        output_out = list()
-        for i in range(self.output_lc):
-            S = 0
-            for j in range(self.hidden_lc):
-                S += hidden_out[j] * self.woLayer[i, j]
-            output_out.append(1 if self.afun(S) > 0.5 else 0)
-        return (hidden_out, output_out)
+NMAX = 50000
 
-    def teach(self, input_vector, image_vector):
-        hOut, Y = self.generate_output(input_vector)
-        D = image_vector
-        W = self.whLayer
-        V = self.woLayer
-        dedv = 0
-        for j in range(len(hOut)):
-            for k in range(self.hidden_lc):
-                print(Y[k])
-                b = (Y[k] - D[k]) * Y[k] * (1 - Y[k])
-                dedv = b * hOut[j]
-                V[j, k] = V[j, k] - self.a * dedv
-        dedw = 0
-        for i in range(self.hidden_lc):
-            for j in range(self.input_c):
-                S = 0
-                for k in range(len(Y)):
-                    b = (Y[k] - D[k]) * Y[k] * (1 - Y[k])
-                    S += V[j, k] * b
-                dedw = S * hOut[j] * (1 - hOut[j]) * input_vector[i]
-            W[i, j] = W[i, j] - self.a * dedw
-        print(f'{Y} | {D} | {"SUCCESS" if D == Y else "FAILURE"}')
+N = 0
+
+#with open#
+
+while True:
+    N += 1
+    X = random.choice(dataSet)[0]
+    D = list()
+    for j in range(neuronCount):
+        d = 0
+        for i in range(inputCount):
+            d += (X[i] - W[i, j]) ** 2
+        D.append(d)
+    minNeuron = D.index(min(D))
+    print(D)
+    DN = round(D0)
+    sumchange = 0
+    for j in range(neuronCount):
+        if abs(minNeuron - j) > DN:
+            continue
+        for i in range(inputCount):
+            change = a0 * (X[i] - W[i, j])
+            W[i, j] = W[i, j] + change
+            sumchange += abs(change)
+    a0 -= deca
+    D0 -= decD
+    if N >= NMAX or sumchange <= 50:
+        with open('weights.txt', 'wb') as file:
+            pickle.dump(W, file)
+        break
+        #print(f'Epoch: {N}. \nSummary Change: {sumchange}.')
+    N += 1
 
 
-ds = readDataSet('data/semeion.data')
+classes = list()
+for i in range(10):
+    classes.append(list())
 
-input_size = len(ds[0][0])
-output_size = len(ds[0][1])
-hidden_size = 5
+for data in dataSet:
+    dataIndex = dataSet.index(data)
+    X = data[0]
+    cl = minNeuron = data[1].index(max(data[1]))
+    D = list()
+    for j in range(neuronCount):
+        d = 0
+        for i in range(inputCount):
+            d += (X[i] - W[i, j]) ** 2
+        D.append(d)
+    minNeuron = D.index(min(D))
+    classes[minNeuron].append(dataIndex)
 
-nn = BPNN(input_size, hidden_size, output_size)
-
-ov = nn.generate_output(ds[0][0])
-
-epoch = 0
-while (epoch <= nn.N):
-    data_pick = random.choice(ds)
-    input_vector = data_pick[0]
-    output_vector = data_pick[1]
-    nn.teach(input_vector, output_vector)
-
+print(classes[0])
