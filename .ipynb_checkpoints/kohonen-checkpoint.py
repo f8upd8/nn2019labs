@@ -16,10 +16,10 @@ neuronCount = 10 #Количество нейронов
 # Шаг 1 - Инициализация Сети
 W = getRandom2DimArray(inputCount, neuronCount, -0.3, 0.3)
 print(W)
-a0 = 1
+a0 = 0.9
 D0 = 10
-decD = 0.9
-deca = 0.9
+decD = 0.05
+deca = 0.01
 
 NMAX = 1100
 
@@ -68,10 +68,10 @@ while True:
         break
     print(f'Epoch: {N}. \nDN: {D0}.\na0: {a0}\nSummary Change: {sumchange}.')
     N += 1
-    if a0 * deca >= 0.1:
-        a0 *= deca
-    if  D0 * decD   >= 0:
-        D0 *= decD  
+    if a0 - deca >= 0.1:
+        a0 -= deca
+    if  D0 - decD   >= 0:
+        D0 -= decD  
 
 
 classes = list()
