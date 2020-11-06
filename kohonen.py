@@ -1,6 +1,6 @@
 import random, numpy
 from numpy import power
-from utility import getRandom2DimArray
+from utility import getRandom2DimArray, saveMonoImageB
 from dataset import readDataSet
 import math
 import pickle
@@ -21,7 +21,7 @@ D0 = 10
 decD = 0.05
 deca = 0.01
 
-NMAX = 50000
+NMAX = 1100
 
 N = 0
 
@@ -44,7 +44,6 @@ while True:
             for i in range(inputCount):
                 d += (X[i] - W[i, j]) ** 2
             D.append(d)
-        #print(D)
         minNeuron = D.index(min(D))
         if prevWinner[0] == minNeuron:
             if prevWinner[1] > 3:
@@ -57,19 +56,16 @@ while True:
             prevWinner = [minNeuron, 1]
         DN = round(D0)
         for j in range(neuronCount):
-            #print(vdist(W[:,j], W[:,minNeuron]))
             if vdist(W[:,j], W[:,minNeuron]) > DN and j != minNeuron:
                 continue
             for i in range(inputCount):
                 change = a0 * (X[i] - W[i, j])
-                #print(change)
                 W[i, j] = W[i, j] + change
                 sumchange += abs(change)
     if N >= NMAX or sumchange <= 50:
         with open('weights.txt', 'wb') as file:
             pickle.dump(W, file)
         break
-    #print(W)
     print(f'Epoch: {N}. \nDN: {D0}.\na0: {a0}\nSummary Change: {sumchange}.')
     N += 1
     if a0 - deca >= 0.1:
